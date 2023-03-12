@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Pagination from "./components/Pagination/Pagination";
+import filterList from './filters/filterList'
+import './App.css'
 
 type Country = {
   name: string;
@@ -7,12 +9,14 @@ type Country = {
   area: number;
 };
 
-const App = () => {
+const App: React.FC = () => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const countriesPerPage: number = 10;
+  const countriesPerPage: number = 20;
   const [originalList, setOriginalList] = useState<Country[]>([]);
+  const [toggleSort, setToggleSort] = useState<boolean>(true);
+  const [filters, setFilters] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -24,14 +28,36 @@ const App = () => {
       const formattedData = data.map((country: any) => ({
         name: country.name,
         region: country.region,
-        area: country.area || 0
+        area: country.area
       }));
       setCountries(formattedData);
-      setOriginalList(formattedData);
       setLoading(false);
     };
     fetchCountries();
+    sortByName("asc")
+    setOriginalList(countries);
   }, []);
+
+  useEffect(()=>{
+    let filteredCountries: Country[] = originalList;
+
+    filters.forEach((filter) => {
+      switch (filter) {
+        case "SmallerThanLithuania":
+          filteredCountries = filteredCountries.filter((country) => country.area < 65200);
+          break;
+        case "InOceania":
+          filteredCountries = filteredCountries.filter((country) => country.region === "Oceania");
+          break;
+        default:
+          break;
+      }
+    });
+
+    setCountries(filteredCountries);
+    setCurrentPage(1);
+    console.log(filters)
+  },[filters])
 
   const indexOfLastCountry: number = currentPage * countriesPerPage;
   const indexOfFirstCountry: number = indexOfLastCountry - countriesPerPage;
@@ -59,21 +85,38 @@ const App = () => {
     setCurrentPage(1);
   };
 
-  const filterBy = (filterby: string) => {
-    let filteredCountries: Country[] = [];
-    if (filterby === "SmallerThanLithuania") {
-      filteredCountries = [...countries].filter((country) => country.area < 65300);
-    } else if (filterby === "InOceania") {
-      filteredCountries = [...countries].filter((country) => country.region === "Oceania");
+  const sortBtn = () => {
+    setToggleSort(!toggleSort);
+    if (toggleSort) {
+      sortByName("desc");
+    } else {
+      sortByName("asc");
     }
-    setCountries(filteredCountries);
-    setCurrentPage(1);
+  }
+
+  const [checked, setChecked] = useState<string[]>([]);
+
+  const handleCheckBoxToggle = (value:string) => {
+    const currentIndex = checked.indexOf(value);
+    const newChecked = [...checked];
+
+    if(currentIndex === -1){
+      newChecked.push(value);
+    }
+    else{
+      newChecked.splice(currentIndex, 1);
+    }
+
+    setChecked(newChecked);
+    setFilters(newChecked);
   }
 
   const resetFilters = () => {
     setCountries(originalList);
+    setToggleSort(true);
     setCurrentPage(1);
-    console.log(originalList)
+    setChecked([]);
+    setFilters([]);
   }
 
   return (
@@ -83,12 +126,34 @@ const App = () => {
       ) : (
         <div>
           <div>
-            <button onClick={() => sortByName("asc")}>Sort A-Z</button>
-            <button onClick={() => sortByName("desc")}>Sort Z-A</button>
-            <button onClick={() => filterBy("SmallerThanLithuania")}>Smaller than Lithuania</button>
-            <button onClick={() => filterBy("InOceania")}>Countries in Oceania</button>
-            <button onClick={() => resetFilters()}>Reset</button>
+            <button onClick={() => sortBtn()}>
+              {
+                toggleSort ? "Sort A-Z↥" : "Sort Z-A↧"
+              }
+            </button>
+
+            {
+              filterList.map((filter) => {
+
+                return (
+                  <span key={filter.id}>
+                    <input
+                      type="checkbox"
+                      id={filter.name}
+                      checked={checked.indexOf(filter.name) === -1 ? false : true}
+                      onChange={() => {
+                        handleCheckBoxToggle(filter.name)
+                      }}
+                    />
+                    <label htmlFor={filter.name}>{filter.displayName}</label>
+                  </span>
+                )
+              })
+            }
+
+            <button onClick={() => resetFilters()}> Reset</button>
           </div>
+
           <table>
             <thead>
               <tr>
