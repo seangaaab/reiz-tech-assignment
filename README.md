@@ -18,7 +18,7 @@ npm run dev
 ```
 
 ## Opening in browser
-The website can now be accessed through http://localhost:5173/
+The website can now be accessed through http://localhost:3000/
 
 ## Developed by
 - [Sean Gabriel Bayron](https://github.com/seangaaab)
