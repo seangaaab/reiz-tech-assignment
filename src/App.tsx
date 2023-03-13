@@ -189,7 +189,7 @@ const App: React.FC = () => {
               <tr>
                 <th>Name</th>
                 <th>Region</th>
-                <th>Area</th>
+                <th>Area in km²</th>
               </tr>
             </thead>
             <tbody>
